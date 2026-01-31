@@ -1,1 +1,1 @@
-from .core import extract_previews
+from .core import extract_previews, extract_preview_for_repo

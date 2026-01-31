@@ -92,6 +92,39 @@ def _fetch_repo_preview_bytes(
     return repo_name, body
 
 
+def extract_preview_for_repo(
+        repo_name: str,
+        *,
+        owner: str | None = None,
+        use_cache: bool = True,
+        cache_dir: Path = DEFAULT_CACHE_DIR,
+        cache_ttl_seconds: int = DEFAULT_CACHE_TTL_SECONDS,
+        skip_default_images: bool = True,
+) -> bytes | None:
+    """
+    Returns: bytes of the preview image for a single repository, or None if not found
+    """
+    actual_owner = owner or user
+    if not actual_owner:
+        raise ValueError("owner must be provided or GITHUB_USER must be set")
+
+    cache = EtagDiskCache(cache_dir) if use_cache else None
+    if cache is not None:
+        cache.evict_expired(cache_ttl_seconds)
+
+    result = _fetch_repo_preview_bytes(
+        repo_name,
+        owner=actual_owner,
+        cache=cache,
+        skip_default_images=skip_default_images,
+    )
+
+    if result is None:
+        return None
+
+    return result[1]
+
+
 def extract_previews(
         *,
         max_workers: int = DEFAULT_MAX_WORKERS,
